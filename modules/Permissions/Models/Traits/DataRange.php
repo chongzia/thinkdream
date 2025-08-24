@@ -35,7 +35,7 @@ trait DataRange
     /**
      * get department ids
      */
-    public function getDepartmentUserIdsBy(array $roles, $currentUser): Collection
+    public function getDepartmentUserIdsBy(array|Collection $roles, $currentUser): Collection
     {
         $userIds = Collection::make();
 
