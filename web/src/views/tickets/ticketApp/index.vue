@@ -8,7 +8,6 @@
           <TemplateSelector 
             v-model:selected-template="selectedTemplate" 
             @template-select="handleTemplateSelect" 
-            ref="templateSelectorRef" 
           />
         </el-col>
         <!-- 右侧：工单创建表单/空页引导 -->
@@ -51,10 +50,6 @@
           title="工单创建成功" 
           :sub-title="`工单编号：${successTicket?.ticket_no || '未知'}`"
         >
-          <!-- 调试信息 -->
-          <div v-if="successTicket" style="margin-top: 16px; font-size: 12px; color: #999;">
-            <p>调试信息：{{ JSON.stringify(successTicket) }}</p>
-          </div>
           <template #extra>
             <el-space>
               <el-button @click="handleCancel">取消</el-button>
@@ -109,20 +104,10 @@ const router = useRouter()
 const selectedTemplate = ref<TemplateData | null>(null)
 const showSuccessDialog = ref(false)
 const successTicket = ref<SubmittedTicket | null>(null)
-const templateSelectorRef = ref()
-
-// 调试信息
-console.log('ticketApp 页面加载')
 
 // 右侧空页行为
 const handleGoToTemplates = () => {
   router.push('/ticket/templates')
-}
-
-const handleRefreshTemplates = () => {
-  if (templateSelectorRef.value?.refreshTemplates) {
-    templateSelectorRef.value.refreshTemplates()
-  }
 }
 
 // 处理模板选择
@@ -134,11 +119,9 @@ const handleTemplateSelect = (template: TemplateData) => {
 const handleFormSubmit = async (formData: any) => {
   try {
     const response = await http.post('tickets/app/submit', formData)
-    console.log('工单提交响应:', response) // 调试日志
     
     if (response.data) {
       const ticket: SubmittedTicket = response.data.data || response.data
-      console.log('工单数据:', ticket) // 调试日志
       handleSubmitSuccess(ticket)
       ElMessage.success('工单提交成功')
     } else {

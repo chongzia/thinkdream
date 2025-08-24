@@ -122,11 +122,14 @@ const fetchTemplates = async () => {
     }
     
     const response = await http.get('tickets/app/templates', params)
-    console.log('API响应:', response) // 调试日志
     if (response.data && response.data.code === 10000) {
       templates.value = response.data.data || []
       pagination.value.total = response.data.total || 0
-      console.log('模板数据:', templates.value) // 调试日志
+      
+      // 默认选中第一个模板
+      if (templates.value.length > 0 && !selectedTemplate.value) {
+        handleTemplateSelect(templates.value[0])
+      }
     } else {
       console.error('API响应格式错误:', response.data)
       ElMessage.error('获取模板列表失败')
@@ -165,6 +168,8 @@ const refreshTemplates = () => {
 // 防抖搜索
 const debouncedSearch = debounce(() => {
   pagination.value.currentPage = 1
+  // 搜索时清空当前选中，让 fetchTemplates 重新选择第一个
+  selectedTemplate.value = null
   fetchTemplates()
 }, 300)
 
@@ -175,6 +180,8 @@ const handleSearch = () => debouncedSearch()
 const handleCurrentChange = (page: number) => {
   if (page && page !== pagination.value.currentPage) {
     pagination.value.currentPage = page
+    // 分页时清空当前选中，让 fetchTemplates 重新选择第一个
+    selectedTemplate.value = null
     fetchTemplates()
   }
 }
@@ -200,7 +207,6 @@ watch(() => searchKeyword.value, () => {
 
 // 组件挂载
 onMounted(() => {
-  console.log('TemplateSelector 组件挂载')
   fetchUsers()
   fetchTemplates()
 })
