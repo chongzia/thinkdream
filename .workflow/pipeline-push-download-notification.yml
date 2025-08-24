@@ -1,0 +1,37 @@
+version: '1.0'
+name: pipeline-push-download-notification
+displayName: 推送下载更新通知
+triggers:
+  trigger: auto
+  push:
+    branches:
+      prefix:
+        - ''
+    tags:
+      prefix:
+        - ''
+variables:
+  REPOSITORY_NAME: catchpro/pro
+stages:
+  - name: stage-bc9b4b00
+    displayName: 推送通知
+    strategy: naturally
+    trigger: auto
+    executor:
+      - jojobro
+    steps:
+      - step: shell@agent
+        name: execute_shell
+        displayName: Shell 脚本执行
+        hostGroupID:
+          ID: 2027.5.1过期
+          hostID:
+            - 614fa245-0af3-477b-b112-69a649814ab7
+        script:
+          - '# 请在此输入您想执行的脚本'
+          - docker exec -i official_pro php ./official-pro/artisan sync:repository:tags catchpro/pro
+          - docker exec -i official_pro  php ./official-pro/artisan download:repository:zip
+          - chmod -R 777 /www/project/official-pro/storage/repository/catchpro
+        notify: []
+        strategy:
+          retry: '0'

@@ -1,0 +1,119 @@
+#!/usr/bin/env php
+<?php
+
+use function Termwind\render;
+
+$autoloadFile = __DIR__.'/vendor/autoload.php';
+
+const AUTH_HOST = 'https://catchadmin.vip/account/auth';
+
+// 提供一个建议安装模式
+function auth($email, $license)
+{
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, AUTH_HOST);
+
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'email' => $email,
+        'password' => $license,
+    ]));
+
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/x-www-form-urlencoded',
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+    $res = curl_exec($ch);
+
+    if (curl_errno($ch) || $res == 'fail') {
+        return false;
+    }
+
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if ($code == 200) {
+        $authjson = [
+            'http-basic' => [
+                'satis.catchadmin.com' => [
+                    'username' => $email,
+                    'password' => $license,
+                ],
+            ],
+
+        ];
+
+        if (file_put_contents('auth.json', json_encode($authjson, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
+            // 配置全局镜像
+            // echo '默认配置腾讯云镜像'.PHP_EOL;
+            // shell_exec('composer config -g repos.packagist composer https://mirrors.tencent.com/composer/');
+            echo PHP_EOL;
+            echo '安装依赖'.PHP_EOL;
+            echo PHP_EOL;
+            shell_exec('composer install --ignore-platform-reqs');
+            echo PHP_EOL;
+        }
+
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function install($argv): void
+{
+    if (! isset($argv[1])) {
+        exit('邮箱不能为空');
+    }
+
+    if (! isset($argv[2])) {
+        exit('授权码不能为空');
+    }
+
+    $email = $argv[1];
+    $license = $argv[2];
+
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        exit('邮箱格式不正确');
+    }
+
+    if (strlen($license) < 16) {
+        exit('授权码不正确');
+    }
+
+    $res = auth($email, $license);
+    if (! $res) {
+        echo '😭 授权失败';
+        echo PHP_EOL;
+        echo "请检查使用该👉邮箱 {$email} 和👉授权码 {$license} 是否正确";
+        echo PHP_EOL;
+        echo '如果正确，请检查 IP 白名单是否添加： https://catchadmin.vip/user/ip ';
+        echo PHP_EOL;
+        echo '授权码获取: https://catchadmin.vip/user/license';
+    }
+}
+
+function info($autoloadFile)
+{
+    require $autoloadFile;
+
+    render(
+        <<<'HTML'
+            <div>
+                <div class="px-1 bg-indigo-700">专业版</div>
+                <em class="ml-1">
+                    <em class="text-green-700 font-bold">🎉 使用「 php artisan catch:install 」安装项目</em>
+                </em>
+            </div>
+HTML
+    );
+}
+
+if (! file_exists($autoloadFile)) {
+    install($argv);
+}
+
+if (file_exists($autoloadFile)) {
+    info($autoloadFile);
+}

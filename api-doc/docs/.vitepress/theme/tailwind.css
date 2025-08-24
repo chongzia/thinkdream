@@ -1,0 +1,40 @@
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+.VPContent {
+    .container {
+        .name:h1 {
+            @apply text-red-500 !important;
+        }
+    }
+}
+.VPSidebar {
+    .items {
+        @apply border-l border-[#e2e2e3] dark:border-gray-900 grid gap-y-3 mt-3;
+
+        .item {
+            @apply h-6 pl-4;
+            indicator {
+                @apply bg-indigo-600 !important;
+            }
+        }
+    }
+}
+
+.dark {
+    .VPSidebar {
+        .items {
+            @apply grid mt-3 border-l border-gray-800 gap-y-3;
+
+            .item {
+                @apply h-6 pl-4;
+                indicator {
+                    @apply text-indigo-600 !important;
+                }
+            }
+        }
+    }
+}

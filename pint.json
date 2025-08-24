@@ -1,0 +1,27 @@
+{
+    "preset": "psr12",
+    "rules": {
+        "braces": false,
+        "phpdoc_to_comment": false,
+        "phpdoc_summary": false,
+        "phpdoc_no_empty_return": false,
+        "phpdoc_trim": false,
+        "no_superfluous_phpdoc_tags": false,
+        "phpdoc_separation": false,
+        "phpdoc_order": false,
+        "phpdoc_var_without_name": false,
+        "phpdoc_no_package": false,
+        "phpdoc_no_useless_inheritdoc": false,
+        "phpdoc_inline_tag_normalizer": false,
+        "phpdoc_tag_type": false,
+        "phpdoc_types": false,
+        "phpdoc_types_order": false,
+        "phpdoc_var_annotation_correct_order": false
+    },
+    "exclude": [
+        "database"
+    ],
+    "notName": [
+        "server.php"
+    ]
+}
