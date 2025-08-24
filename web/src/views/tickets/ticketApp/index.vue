@@ -49,11 +49,15 @@
         <el-result 
           icon="success" 
           title="工单创建成功" 
-          :sub-title="`工单编号：${successTicket?.ticket_no}`"
+          :sub-title="`工单编号：${successTicket?.ticket_no || '未知'}`"
         >
+          <!-- 调试信息 -->
+          <div v-if="successTicket" style="margin-top: 16px; font-size: 12px; color: #999;">
+            <p>调试信息：{{ JSON.stringify(successTicket) }}</p>
+          </div>
           <template #extra>
             <el-space>
-              <el-button @click="handleCreateAnother">再创建一个</el-button>
+              <el-button @click="handleCancel">取消</el-button>
               <el-button type="primary" @click="handleViewTicket">查看工单</el-button>
             </el-space>
           </template>
@@ -83,6 +87,7 @@ interface TemplateData {
   ticket_process: string
   ticket_accept_days: number
   ticket_process_days: number
+  ticket_is_active: number
   created_at: string
   updated_at: string
 }
@@ -106,6 +111,9 @@ const showSuccessDialog = ref(false)
 const successTicket = ref<SubmittedTicket | null>(null)
 const templateSelectorRef = ref()
 
+// 调试信息
+console.log('ticketApp 页面加载')
+
 // 右侧空页行为
 const handleGoToTemplates = () => {
   router.push('/ticket/templates')
@@ -126,9 +134,11 @@ const handleTemplateSelect = (template: TemplateData) => {
 const handleFormSubmit = async (formData: any) => {
   try {
     const response = await http.post('tickets/app/submit', formData)
+    console.log('工单提交响应:', response) // 调试日志
     
     if (response.data) {
       const ticket: SubmittedTicket = response.data.data || response.data
+      console.log('工单数据:', ticket) // 调试日志
       handleSubmitSuccess(ticket)
       ElMessage.success('工单提交成功')
     } else {
@@ -147,17 +157,15 @@ const handleSubmitSuccess = (ticket: SubmittedTicket) => {
   showSuccessDialog.value = true
 }
 
-// 再创建一个工单
-const handleCreateAnother = () => {
+// 取消操作
+const handleCancel = () => {
   showSuccessDialog.value = false
   successTicket.value = null
 }
 
-// 查看工单详情
+// 查看工单列表
 const handleViewTicket = () => {
-  if (successTicket.value?.id) {
-    router.push(`/tickets/detail/${successTicket.value.id}`)
-  }
+  router.push('/tickets')
 }
 </script>
 

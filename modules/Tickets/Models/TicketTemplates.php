@@ -85,6 +85,8 @@ class TicketTemplates extends Model
      */
     public function ticketConfigs(): HasMany
     {
-        return $this->hasMany(TicketConfigs::class, 'template_id', 'id');
+        // 暂时注释掉，因为 TicketConfigs 模型不存在
+        // return $this->hasMany(TicketConfigs::class, 'template_id', 'id');
+        return $this->hasMany(\Modules\System\Models\SystemConfig::class, 'template_id', 'id');
     }
 }

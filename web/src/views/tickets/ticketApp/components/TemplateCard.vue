@@ -5,15 +5,14 @@
     @click="handleSelect"
   >
     <div class="card-content">
-      <div class="card-header">
-        <h4 class="template-name">{{ template.ticket_name }}</h4>
-        <el-tag 
-          :type="template.ticket_is_active === 1 ? 'success' : 'warning'" 
-          size="small"
-        >
-          {{ template.ticket_is_active === 1 ? '已启用' : '已禁用' }}
-        </el-tag>
-      </div>
+             <div class="card-header">
+         <h4 class="template-name">{{ template.ticket_name }}</h4>
+                   <div class="header-right">
+            <el-icon v-if="selected" class="selected-icon" color="var(--el-color-primary)">
+              <CircleCheck />
+            </el-icon>
+          </div>
+       </div>
       
       <div class="template-description">
         {{ template.ticket_description || '暂无描述' }}
@@ -60,7 +59,7 @@
 </template>
 
 <script lang="ts" setup>
-import { User, UserFilled, Clock } from '@element-plus/icons-vue'
+import { User, UserFilled, Clock, CircleCheck } from '@element-plus/icons-vue'
 
 // 类型定义
 interface TemplateData {
@@ -103,10 +102,15 @@ const getAcceptorName = (acceptorId: number): string => {
 const getProcessPeople = (processString: string): string[] => {
   if (!processString) return []
   try {
+    // 先尝试解析为JSON
     const process = JSON.parse(processString)
     return Array.isArray(process) ? process : []
   } catch {
-    return processString.split(',').filter(Boolean)
+    // 如果不是JSON，按逗号分割
+    return processString.split(',').filter(Boolean).map(id => {
+      const numId = parseInt(id.trim())
+      return props.userMap.get(numId) || id.trim()
+    })
   }
 }
 </script>
@@ -129,9 +133,8 @@ const getProcessPeople = (processString: string): string[] => {
 }
 
 .template-card.selected {
-  border-color: var(--el-color-primary);
-  background-color: var(--el-color-primary-light-9);
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+  border: 2px solid var(--el-color-primary);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
 }
 
 .card-content {
@@ -145,6 +148,17 @@ const getProcessPeople = (processString: string): string[] => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selected-icon {
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 .template-name {

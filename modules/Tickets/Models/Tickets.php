@@ -162,6 +162,8 @@ class Tickets extends Model
      */
     public function ticketConfig(): BelongsTo
     {
-        return $this->belongsTo(TicketConfigs::class, 'ticket_node_id', 'id');
+        // 暂时注释掉，因为 TicketConfigs 模型不存在
+        // return $this->belongsTo(TicketConfigs::class, 'ticket_node_id', 'id');
+        return $this->belongsTo(\Modules\System\Models\SystemConfig::class, 'ticket_node_id', 'id');
     }
 }

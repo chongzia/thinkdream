@@ -176,6 +176,12 @@ const defaultRoutes: RouteRecordRaw[] = [
         name: 'ticket-templates',
         meta: { title: '工单模板管理' },
         component: () => import('@/views/tickets/ticketTemplates/index.vue')
+      },
+      {
+        path: 'app',
+        name: 'ticket-app',
+        meta: { title: '工单创建' },
+        component: () => import('@/views/tickets/ticketApp/index.vue')
       }
     ]
   },

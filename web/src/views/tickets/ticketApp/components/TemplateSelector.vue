@@ -1,42 +1,62 @@
 <template>
   <div class="template-selector">
-    <el-card class="selector-card">
-      <template #header>
-        <div class="card-header">
-          <span>选择工单模板</span>
-          <el-button size="small" @click="refreshTemplates">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
-        </div>
-      </template>
-      
-      <div class="template-list">
-        <div v-loading="loading" class="loading-container">
-          <template v-if="templates.length > 0">
-            <TemplateCard
-              v-for="template in templates"
-              :key="template.id"
-              :template="template"
-              :selected="selectedTemplate?.id === template.id"
-              :user-map="userMap"
-              @select="handleTemplateSelect"
-            />
-          </template>
-          
-          <el-empty v-else-if="!loading" description="暂无可用模板" />
-        </div>
+    <div class="selector-header">
+      <h3>选择工单模板</h3>
+      <el-button size="small" @click="refreshTemplates">
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
+    </div>
+
+    <div class="search-section">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索模板名称..."
+        clearable
+        @input="handleSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
+
+    <div class="template-list-container" v-loading="loading">
+      <div v-if="templates.length === 0 && !loading" class="empty-state">
+        <el-empty :description="searchKeyword ? '未找到匹配的模板' : '暂无可用模板'" :image-size="80">
+          <el-button type="primary" @click="refreshTemplates">重新加载</el-button>
+        </el-empty>
       </div>
-    </el-card>
+
+      <template v-else>
+        <TemplateCard
+          v-for="template in templates"
+          :key="template.id"
+          :template="template"
+          :selected="selectedTemplate?.id === template.id"
+          :user-map="userMap"
+          @select="handleTemplateSelect"
+        />
+      </template>
+    </div>
+
+    <BasePagination 
+      v-model:current-page="pagination.currentPage" 
+      :page-size="pagination.pageSize"
+      :total="pagination.total" 
+      @page-change="handleCurrentChange" 
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { debounce } from 'lodash-es'
 import http from '@/support/http'
 import TemplateCard from './TemplateCard.vue'
+import BasePagination from '@/components/common/BasePagination.vue'
 
 // 类型定义
 interface TemplateData {
@@ -72,6 +92,14 @@ const emit = defineEmits<{
 const loading = ref(false)
 const templates = ref<TemplateData[]>([])
 const userMap = ref<Map<number, string>>(new Map())
+const searchKeyword = ref('')
+
+// 分页数据
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0
+})
 
 // 计算属性
 const selectedTemplate = computed({
@@ -83,10 +111,24 @@ const selectedTemplate = computed({
 const fetchTemplates = async () => {
   loading.value = true
   try {
-    const response = await http.get('tickets/app/templates')
-    if (response.data && response.data.code === 200) {
+    const params: any = {
+      page: pagination.value.currentPage,
+      limit: pagination.value.pageSize
+    }
+    
+    // 添加搜索参数
+    if (searchKeyword.value.trim()) {
+      params.ticket_name = searchKeyword.value.trim()
+    }
+    
+    const response = await http.get('tickets/app/templates', params)
+    console.log('API响应:', response) // 调试日志
+    if (response.data && response.data.code === 10000) {
       templates.value = response.data.data || []
+      pagination.value.total = response.data.total || 0
+      console.log('模板数据:', templates.value) // 调试日志
     } else {
+      console.error('API响应格式错误:', response.data)
       ElMessage.error('获取模板列表失败')
     }
   } catch (error) {
@@ -120,6 +162,23 @@ const refreshTemplates = () => {
   fetchTemplates()
 }
 
+// 防抖搜索
+const debouncedSearch = debounce(() => {
+  pagination.value.currentPage = 1
+  fetchTemplates()
+}, 300)
+
+// 搜索功能
+const handleSearch = () => debouncedSearch()
+
+// 分页处理
+const handleCurrentChange = (page: number) => {
+  if (page && page !== pagination.value.currentPage) {
+    pagination.value.currentPage = page
+    fetchTemplates()
+  }
+}
+
 // 暴露方法给父组件
 defineExpose({
   refreshTemplates
@@ -132,8 +191,16 @@ watch(() => props.selectedTemplate, (newVal) => {
   }
 })
 
+// 监听搜索关键词变化
+watch(() => searchKeyword.value, () => {
+  if (!searchKeyword.value) {
+    handleSearch()
+  }
+})
+
 // 组件挂载
 onMounted(() => {
+  console.log('TemplateSelector 组件挂载')
   fetchUsers()
   fetchTemplates()
 })
@@ -142,54 +209,67 @@ onMounted(() => {
 <style scoped>
 .template-selector {
   height: 100%;
-}
-
-.selector-card {
-  height: 100%;
+  padding: 16px;
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-lighter);
   display: flex;
   flex-direction: column;
 }
 
-.card-header {
+.selector-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: bold;
+  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
-.template-list {
-  flex: 1;
+.selector-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.search-section {
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.template-list-container {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  padding: 8px 0;
+  overflow-x: hidden;
 }
 
-.loading-container {
-  min-height: 200px;
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
 }
 
-/* 滚动条样式 */
-.template-list::-webkit-scrollbar {
+.template-list-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.template-list::-webkit-scrollbar-track {
+.template-list-container::-webkit-scrollbar-track {
   background: var(--el-border-color-lighter);
   border-radius: 3px;
 }
 
-.template-list::-webkit-scrollbar-thumb {
+.template-list-container::-webkit-scrollbar-thumb {
   background: var(--el-color-primary-light-3);
   border-radius: 3px;
 }
 
-.template-list::-webkit-scrollbar-thumb:hover {
+.template-list-container::-webkit-scrollbar-thumb:hover {
   background: var(--el-color-primary);
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .template-list {
-    padding: 4px 0;
+  .template-list-container {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 </style>
