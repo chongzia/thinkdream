@@ -148,7 +148,7 @@ const handleCancel = () => {
 
 // 查看工单列表
 const handleViewTicket = () => {
-  router.push('/tickets')
+  router.push('/ticket/tickets')
 }
 </script>
 

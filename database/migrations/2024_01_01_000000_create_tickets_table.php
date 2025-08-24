@@ -19,10 +19,8 @@ return new class extends Migration
             $table->integer('ticket_priority')->default(2)->comment('优先级 (1:低, 2:中, 3:高, 4:特)');
             $table->integer('ticket_promoter')->comment('工单发起人');
             $table->integer('ticket_accept_at')->nullable()->comment('工单受理日期');
-            $table->integer('ticket_accept_overdue')->default(0)->comment('工单受理超期 (0:未超期, 1:超期)');
             $table->integer('ticket_accept_days')->default(1)->comment('工单受理天数');
             $table->integer('ticket_process_at')->nullable()->comment('工单流程日期');
-            $table->integer('ticket_process_overdue')->default(0)->comment('工单流程超期 (0:未超期, 1:超期)');
             $table->integer('ticket_process_days')->default(3)->comment('工单处理天数');
             $table->integer('ticket_node_id')->default(1)->comment('工单节点');
             $table->integer('ticket_node_accept')->comment('工单受理人');

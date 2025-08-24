@@ -19,8 +19,10 @@ Route::prefix('tickets')->group(function(){
 	
 
 	
-	// 工单应用路由组 (TicketsApp)
-	Route::prefix('app')->group(function() {
+	// 工单应用路由组 (TicketsApp) - 无需权限验证
+	Route::withoutMiddleware([
+		\Modules\Permissions\Middlewares\PermissionGate::class,
+	])->prefix('app')->group(function() {
 		// 获取启用的模板列表
 		Route::get('templates', [TicketsAppController::class, 'getTemplates'])
 			->name('tickets.app.templates');

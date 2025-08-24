@@ -19,10 +19,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('ticket_priority')->default(1)->comment('工单优先级');
             $table->unsignedBigInteger('ticket_promoter')->comment('工单发起人');
             $table->unsignedInteger('ticket_accept_at')->nullable()->comment('工单受理日期');
-            $table->unsignedTinyInteger('ticket_accept_overdue')->default(0)->comment('工单受理超期');
             $table->unsignedInteger('ticket_accept_days')->default(3)->comment('工单受理天数');
             $table->unsignedInteger('ticket_process_at')->nullable()->comment('工单流程日期');
-            $table->unsignedTinyInteger('ticket_process_overdue')->default(0)->comment('工单流程超期');
             $table->unsignedInteger('ticket_process_days')->default(7)->comment('工单处理天数');
             $table->unsignedBigInteger('ticket_node_id')->comment('工单节点');
             $table->unsignedBigInteger('ticket_node_accept')->comment('工单受理人');

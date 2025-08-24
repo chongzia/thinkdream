@@ -70,22 +70,24 @@ class TicketsAppController extends Controller
             // 生成工单编号
             $ticketNo = $this->generateTicketNumber();
 
+            // 获取第一个处理人ID（从处理人列表中提取第一个）
+            $processIds = explode(',', $template->ticket_process);
+            $firstProcessId = (int) trim($processIds[0]);
+
             // 准备工单数据
             $ticketData = [
                 'ticket_no' => $ticketNo,
                 'ticket_name' => $validated['title'],
-                'ticket_status' => $validated['status'] ?? 1,
+                'ticket_status' => $validated['status'] ?? 4, // 提交后直接进入处理中状态
                 'ticket_priority' => $validated['priority'],
                 'ticket_template' => $validated['template_id'],
                 'ticket_promoter' => auth()->id() ?? 1,
                 'ticket_node_id' => 1,
                 'ticket_node_accept' => $template->ticket_accept,
                 'ticket_node_process' => $template->ticket_process,
-                'ticket_process_position' => 1,
+                'ticket_process_position' => $firstProcessId, // 设置为第一个处理人ID
                 'ticket_accept_days' => $template->ticket_accept_days,
                 'ticket_process_days' => $template->ticket_process_days,
-                'ticket_accept_overdue' => 0,
-                'ticket_process_overdue' => 0,
                 'ticket_data' => $validated['form_data'] ?? '',
             ];
 

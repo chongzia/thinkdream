@@ -216,20 +216,14 @@ const fieldConfigs = {
   ticket_priority: { label: '优先级', width: 90, align: 'center', tags: ['success', 'primary', 'warning', 'danger'] },
   ticket_promoter: { label: '发起人', width: 100 },
   ticket_process_position: { label: '受理人', width: 100 },
-  ticket_node_process: { label: '处理人', width: 120 },
+  ticket_node_process: { label: '处理人', width: 200, showOverflowTooltip: true },
   ticket_accept_at: { label: '受理时间', width: 160 },
-  ticket_accept_overdue: { label: '受理超期', width: 90, align: 'center', tags: ['success', 'danger'] },
   ticket_process_at: { label: '处理时间', width: 160 },
-  ticket_process_overdue: { label: '处理超期', width: 90, align: 'center', tags: ['success', 'danger'] },
   created_at: { label: '创建时间', width: 160 },
   closed_at: { label: '关闭时间', width: 160 }
 }
 
-// 超期状态选项
-const overdueOptions = [
-  { label: '正常', value: 0 },
-  { label: '超期', value: 1 }
-]
+
 
 // 搜索表单配置
 const searchForm = [
@@ -263,8 +257,7 @@ const searchForm = [
     placeholder: '请选择受理人',
     options: Array.from(userMap.value.entries()).map(([value, label]) => ({ value, label }))
   },
-  { type: 'select', name: 'ticket_accept_overdue', label: fieldConfigs.ticket_accept_overdue.label, placeholder: '请选择受理超期状态', options: overdueOptions },
-  { type: 'select', name: 'ticket_process_overdue', label: fieldConfigs.ticket_process_overdue.label, placeholder: '请选择处理超期状态', options: overdueOptions },
+
   { type: 'date', name: 'created_at', label: fieldConfigs.created_at.label, placeholder: '请选择创建时间' },
   { type: 'date', name: 'ticket_accept_at', label: fieldConfigs.ticket_accept_at.label, placeholder: '请选择受理时间' },
   { type: 'date', name: 'closed_at', label: fieldConfigs.closed_at.label, placeholder: '请选择关闭时间' }
@@ -273,8 +266,20 @@ const searchForm = [
 // 时间格式化函数
 const formatTime = (timestamp: number) => timestamp ? new Date(timestamp * 1000).toLocaleString() : '-'
 
-// 超期状态格式化函数
-const formatOverdue = (value: number) => value === 1 ? '超期' : '正常'
+// 超期状态计算函数
+const calculateAcceptOverdue = (row: any) => {
+  if (!row.ticket_accept_at || !row.ticket_accept_days) return '正常'
+  const acceptTime = row.ticket_accept_at * 1000
+  const deadline = acceptTime + (row.ticket_accept_days * 24 * 60 * 60 * 1000)
+  return Date.now() > deadline ? '超期' : '正常'
+}
+
+const calculateProcessOverdue = (row: any) => {
+  if (!row.ticket_process_at || !row.ticket_process_days) return '正常'
+  const processTime = row.ticket_process_at * 1000
+  const deadline = processTime + (row.ticket_process_days * 24 * 60 * 60 * 1000)
+  return Date.now() > deadline ? '超期' : '正常'
+}
 
 // table columns - 使用公共配置
 const columns = computed(() => [
@@ -312,19 +317,9 @@ const columns = computed(() => [
     filter: formatTime
   },
   { 
-    prop: 'ticket_accept_overdue', 
-    ...fieldConfigs.ticket_accept_overdue,
-    filter: formatOverdue
-  },
-  { 
     prop: 'ticket_process_at', 
     ...fieldConfigs.ticket_process_at,
     filter: formatTime
-  },
-  { 
-    prop: 'ticket_process_overdue', 
-    ...fieldConfigs.ticket_process_overdue,
-    filter: formatOverdue
   },
   { prop: 'created_at', ...fieldConfigs.created_at },
   { 
