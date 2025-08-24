@@ -298,7 +298,6 @@ const TICKET_PRIORITY_COLORS: Record<TicketPriority, string> = {
 
 // Props
 interface Props {
-  templateId?: number
   templateData?: TemplateInfo | null
   displayHeader?: boolean
   displayMeta?: boolean
@@ -493,33 +492,21 @@ const initFormData = () => {
 
 const loadOptions = async () => {
   try {
-    const response = await http.get('tickets/app/priority-options')
-    if (response.data?.data) {
+    // 从字典API获取优先级选项
+    const response = await http.get('options/ticketPriority')
+    if (response.data && response.data.data) {
       priorityOptions.value = Array.isArray(response.data.data) ? response.data.data : []
     }
   } catch (error) {
-    console.error('加载选项失败:', error)
+    console.error('加载优先级选项失败:', error)
+    // 加载失败时不设置默认选项
+    priorityOptions.value = []
   }
 }
 
 const fetchTemplate = async (id: number) => {
-  if (!id) return
-  
-  loading.value = true
-  try {
-    const response = await http.get(`tickets/app/template/${id}/form`)
-    const data = response.data?.data || response.data
-    
-    if (data) {
-      templateInfo.value = data
-      nextTick(initFormData)
-    }
-  } catch (error) {
-    console.error('获取模板失败:', error)
-    ElMessage.error('获取模板失败')
-  } finally {
-    loading.value = false
-  }
+  // 模板数据已通过props传递，无需单独获取
+  console.warn('fetchTemplate方法已废弃，模板数据应通过props传递')
 }
 
 const validateForm = async (): Promise<boolean> => {
@@ -549,7 +536,7 @@ const submitForm = async () => {
       title: template?.ticket_name || '',
       content: '',
       priority: formData.value.priority,
-      template_id: props.templateId || template?.id,
+      template_id: template?.id,
       status: TicketStatus.PENDING,
       form_data: JSON.stringify(formData.value.dynamic)
     }
@@ -567,12 +554,6 @@ const resetForm = () => {
 }
 
 // 监听器
-watch(() => props.templateId, (newId) => {
-  if (newId && !props.templateData) {
-    fetchTemplate(newId)
-  }
-}, { immediate: true })
-
 watch(() => props.templateData, (newData) => {
   if (newData) {
     templateInfo.value = newData
@@ -584,9 +565,7 @@ watch(() => props.templateData, (newData) => {
 onMounted(() => {
   loadOptions()
   
-  if (props.templateId && !props.templateData) {
-    fetchTemplate(props.templateId)
-  } else if (props.templateData) {
+  if (props.templateData) {
     templateInfo.value = props.templateData
     nextTick(initFormData)
   }

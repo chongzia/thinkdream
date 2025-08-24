@@ -17,9 +17,7 @@ Route::prefix('tickets')->group(function(){
 	
 	Route::adminResource('ticket/templates', TicketTemplatesController::class);
 	
-	// 获取启用状态的模板列表（用于工单创建）
-	Route::get('ticket/templates/active', [TicketTemplatesController::class, 'activeTemplates'])
-		->name('ticket.templates.active');
+
 	
 	// 工单应用路由组 (TicketsApp)
 	Route::prefix('app')->group(function() {
@@ -27,22 +25,9 @@ Route::prefix('tickets')->group(function(){
 		Route::get('templates', [TicketsAppController::class, 'getTemplates'])
 			->name('tickets.app.templates');
 		
-		// 获取模板表单配置
-		Route::get('template/{templateId}/form', [TicketsAppController::class, 'getTemplateForm'])
-			->where('templateId', '[0-9]+')
-			->name('tickets.app.template.form');
-		
 		// 提交工单
 		Route::post('submit', [TicketsAppController::class, 'submitTicket'])
 			->name('tickets.app.submit');
-		
-		// 获取状态选项
-		Route::get('status-options', [TicketsAppController::class, 'getStatusOptions'])
-			->name('tickets.app.status.options');
-		
-		// 获取优先级选项
-		Route::get('priority-options', [TicketsAppController::class, 'getPriorityOptions'])
-			->name('tickets.app.priority.options');
 	});
 	
 	//next

@@ -46,15 +46,10 @@ class TicketsAppRequest extends FormRequest
                 'max:255',
                 'min:2',
             ],
-            'content' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
             'priority' => [
                 'required',
                 'integer',
-                Rule::in([1, 2, 3]), // 1:低, 2:中, 3:高
+                Rule::in([1, 2, 3]),
             ],
             'template_id' => [
                 'required',
@@ -63,12 +58,12 @@ class TicketsAppRequest extends FormRequest
             ],
             'form_data' => [
                 'nullable',
-                'string', // JSON字符串
+                'string',
             ],
             'status' => [
                 'nullable',
                 'integer',
-                Rule::in([1, 2, 3, 4]), // 1:待处理, 2:处理中, 3:已完成, 4:已关闭
+                Rule::in([1, 2, 3, 4]),
             ],
         ];
     }
@@ -80,7 +75,6 @@ class TicketsAppRequest extends FormRequest
     {
         return [
             'title' => '工单标题',
-            'content' => '工单内容',
             'priority' => '优先级',
             'template_id' => '模板ID',
             'form_data' => '表单数据',
@@ -97,7 +91,6 @@ class TicketsAppRequest extends FormRequest
             'title.required' => '工单标题不能为空',
             'title.min' => '工单标题至少需要2个字符',
             'title.max' => '工单标题不能超过255个字符',
-            'content.max' => '工单内容不能超过2000个字符',
             'priority.required' => '请选择优先级',
             'priority.in' => '优先级选择无效',
             'template_id.required' => '请选择工单模板',

@@ -4,7 +4,6 @@ namespace Modules\Tickets\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\Tickets\Http\Rules\ValidFormSchemaRule;
 use Modules\Tickets\Http\Rules\ValidFieldArrayRule;
 
 class TicketTemplateRequest extends FormRequest
@@ -18,24 +17,20 @@ class TicketTemplateRequest extends FormRequest
     {
         $rules = [];
         
-        // 判断是否为表单配置保存路由
         $isFormSave = $this->route()->getName() === 'ticket.template.form.save';
         
         if ($this->isMethod('POST') || $this->isMethod('PUT') || $this->isMethod('PATCH')) {
             if ($isFormSave) {
-                // 表单配置保存只验证 ticket_form
                 $rules = [
                     'ticket_form' => ['required', 'string', new ValidFieldArrayRule()],
                 ];
             } else {
-                // 完整模板验证
                 $rules = [
                     'ticket_name' => [
                         'required',
                         'string',
                         'max:255',
                         Rule::unique('ticket_templates', 'ticket_name')->where(function ($query) {
-                            // 更新时排除当前记录
                             return $query->when($this->route('template'), function ($query) {
                                 $query->where('id', '<>', $this->route('template'));
                             });
@@ -52,14 +47,6 @@ class TicketTemplateRequest extends FormRequest
             }
         }
         
-        // DELETE请求只需要验证资源存在（通过路由模型绑定自动处理）
-        if ($this->isMethod('DELETE')) {
-            $rules = [
-                // 删除操作通常通过路由模型绑定验证，无需额外规则
-                // 如果需要额外验证（如权限），在authorize()方法中处理
-            ];
-        }
-        
         return $rules;
     }
     
@@ -68,9 +55,7 @@ class TicketTemplateRequest extends FormRequest
      */
     public function prepareForValidation(): void
     {
-        // 在验证前预处理数据
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            // 确保更新操作有正确的资源ID
             $this->merge([
                 'template_id' => $this->route('template')
             ]);
@@ -85,7 +70,6 @@ class TicketTemplateRequest extends FormRequest
     {
         $validated = parent::validated($key, $default);
         
-        // 清理不需要的字段
         if (isset($validated['template_id'])) {
             unset($validated['template_id']);
         }
@@ -105,7 +89,6 @@ class TicketTemplateRequest extends FormRequest
             'ticket_name.unique' => '模板名称已存在',
             'ticket_description.string' => '模板描述必须是字符串',
             'ticket_description.max' => '模板描述最多255个字符',
-            // 'ticket_form.required' => '模板表单必须填写', // 支持分步操作
             'ticket_form.string' => '模板表单必须是字符串',
             'ticket_accept.required' => '受理人必须选择',
             'ticket_accept.integer' => '受理人必须是整数',

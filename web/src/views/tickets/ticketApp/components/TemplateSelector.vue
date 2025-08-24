@@ -125,6 +125,7 @@ const fetchTemplates = async () => {
     if (response.data && response.data.code === 10000) {
       templates.value = response.data.data || []
       pagination.value.total = response.data.total || 0
+      await loadUsersBatch()
       
       // 默认选中第一个模板
       if (templates.value.length > 0 && !selectedTemplate.value) {
@@ -142,18 +143,60 @@ const fetchTemplates = async () => {
   }
 }
 
-const fetchUsers = async () => {
+const userLoading = ref(false)
+
+const loadUsersBatch = async () => {
+  if (userLoading.value || templates.value.length === 0) return
+
   try {
-    const response = await http.get('/users')
-    if (response.data && response.data.data) {
-      const users = response.data.data
-      users.forEach((user: any) => {
+    const userIds: number[] = []
+
+    templates.value.forEach(template => {
+      if (template.ticket_accept) {
+        userIds.push(template.ticket_accept)
+      }
+
+      if (template.ticket_process) {
+        const processIds = parseProcessIds(template.ticket_process)
+        userIds.push(...processIds)
+      }
+    })
+
+    const uniqueUserIds = [...new Set(userIds)]
+    if (uniqueUserIds.length === 0) return
+
+    userLoading.value = true
+    const response = await http.get('/users/batch', { user_ids: uniqueUserIds })
+
+    if (response.data?.data) {
+      response.data.data.forEach((user: any) => {
         userMap.value.set(user.id, user.username)
       })
     }
   } catch (error) {
-    console.error('获取用户列表失败:', error)
+    console.error('批量获取用户信息失败:', error)
+  } finally {
+    userLoading.value = false
   }
+}
+
+const parseProcessIds = (processStr: any): number[] => {
+  if (!processStr) return []
+
+  try {
+    const parsed = typeof processStr === 'string' ? JSON.parse(processStr) : processStr
+    if (Array.isArray(parsed)) {
+      return parsed.map(id => Number(id)).filter(id => !isNaN(id))
+    }
+  } catch {
+    if (typeof processStr === 'string') {
+      const ids = processStr.split(',').map(id => id.trim()).filter(id => id)
+      return ids.map(id => Number(id)).filter(id => !isNaN(id))
+    }
+  }
+
+  const id = Number(processStr)
+  return !isNaN(id) ? [id] : []
 }
 
 const handleTemplateSelect = (template: TemplateData) => {
@@ -207,7 +250,6 @@ watch(() => searchKeyword.value, () => {
 
 // 组件挂载
 onMounted(() => {
-  fetchUsers()
   fetchTemplates()
 })
 </script>

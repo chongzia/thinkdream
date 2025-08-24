@@ -17,7 +17,7 @@
           </el-icon>
           <span class="info-label">时限:</span>
           <el-tag size="small">{{ template.ticket_accept_days }}天受理</el-tag>
-          <el-tag size="small">{{ template.ticket_process_days }}天处理</el-tag>
+          <el-tag size="small" type="warning">{{ template.ticket_process_days }}天处理</el-tag>
         </div>
 
         <div class="info-row">
@@ -26,7 +26,7 @@
           </el-icon>
           <span class="info-label">流程人:</span>
           <el-tag v-for="(person, index) in getProcessPeople(template.ticket_process)" :key="index" size="small"
-            type="info">
+            type="warning">
             {{ person }}
           </el-tag>
         </div>

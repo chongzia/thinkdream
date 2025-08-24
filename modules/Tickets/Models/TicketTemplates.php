@@ -13,7 +13,6 @@ use Modules\Permissions\Models\Traits\DataRange;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -62,7 +61,6 @@ class TicketTemplates extends Model
     {
         parent::__construct();
         
-        // 设置可搜索字段 - 参考 SnmpUsers 模型的成功实现
         $this->searchable = [
             'ticket_name' => 'like',
             'ticket_is_active' => '=',
@@ -79,14 +77,5 @@ class TicketTemplates extends Model
         return $this->hasOne(related: Tickets::class, foreignKey: 'template_id', localKey: 'id');
     }
 
-    /**
-     * 关联工单配置（一个模板可以有多个配置）
-     * @return HasMany
-     */
-    public function ticketConfigs(): HasMany
-    {
-        // 暂时注释掉，因为 TicketConfigs 模型不存在
-        // return $this->hasMany(TicketConfigs::class, 'template_id', 'id');
-        return $this->hasMany(\Modules\System\Models\SystemConfig::class, 'template_id', 'id');
-    }
+
 }

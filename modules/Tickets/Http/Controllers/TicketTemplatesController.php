@@ -87,13 +87,11 @@ class TicketTemplatesController extends Controller
      */
     public function saveForm(mixed $id, TicketTemplateRequest $request): mixed
     {
-        // 验证模板是否存在
         $template = $this->model->firstBy($id);
         if (!$template) {
             abort(404, '模板不存在');
         }
 
-        // 更新表单配置
         return $this->model->updateBy($id, $request->validated());
     }
 
@@ -105,7 +103,6 @@ class TicketTemplatesController extends Controller
      */
     public function getForm(mixed $id): mixed
     {
-        // 验证模板是否存在
         $template = $this->model->firstBy($id);
         if (!$template) {
             abort(404, '模板不存在');
@@ -118,51 +115,5 @@ class TicketTemplatesController extends Controller
         ];
     }
 
-    /**
-     * 获取启用状态的模板列表（用于工单创建）
-     *
-     * @param  Request  $request
-     * @return mixed
-     */
-    public function activeTemplates(Request $request): mixed
-    {
-        // 构建查询条件
-        $query = $this->model->newQuery()
-            ->where('ticket_is_active', 1) // 只获取启用的模板
-            ->orderBy('created_at', 'desc');
 
-        // 搜索条件
-        if ($request->filled('ticket_name')) {
-            $query->where('ticket_name', 'like', '%' . $request->input('ticket_name') . '%');
-        }
-
-        // 分页参数
-        $page = max(1, (int) $request->input('page', 1));
-        $limit = min(50, max(1, (int) $request->input('limit', 10))); // 限制每页最大50条
-
-        // 执行分页查询
-        $total = $query->count();
-        $data = $query->offset(($page - 1) * $limit)
-            ->limit($limit)
-            ->get([
-                'id',
-                'ticket_name',
-                'ticket_description',
-                'ticket_accept',
-                'ticket_process',
-                'ticket_accept_days',
-                'ticket_process_days',
-                'ticket_is_active',
-                'created_at',
-                'updated_at'
-            ]);
-
-        return [
-            'data' => $data,
-            'total' => $total,
-            'page' => $page,
-            'limit' => $limit,
-            'pages' => ceil($total / $limit)
-        ];
-    }
 }

@@ -12,7 +12,6 @@ use Catch\Traits\DB\WithAttributes;
 use Modules\Permissions\Models\Traits\DataRange;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int $id
@@ -156,14 +155,5 @@ class Tickets extends Model
         return $this->hasOne(related: TicketTemplates::class, foreignKey: 'id', localKey: 'ticket_template');
     }
 
-    /**
-     * 关联工单配置
-     * @return BelongsTo
-     */
-    public function ticketConfig(): BelongsTo
-    {
-        // 暂时注释掉，因为 TicketConfigs 模型不存在
-        // return $this->belongsTo(TicketConfigs::class, 'ticket_node_id', 'id');
-        return $this->belongsTo(\Modules\System\Models\SystemConfig::class, 'ticket_node_id', 'id');
-    }
+
 }
