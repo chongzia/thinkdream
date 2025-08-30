@@ -41,7 +41,7 @@
               <span v-else class="no-rules">无</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="280" fixed="right" align="center">
+          <el-table-column label="操作" width="290" fixed="right" align="center">
             <template #default="{ row, $index }">
               <el-space>
                 <el-button v-if="hasTemplateUpdatePermission" size="small" type="primary" text @click="handleEdit(row)">

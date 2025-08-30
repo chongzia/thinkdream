@@ -107,12 +107,31 @@ const parsedFormData = computed(() => {
   if (!props.formData) return null
   
   try {
-    return typeof props.formData === 'string' 
-      ? JSON.parse(props.formData)
-      : props.formData
-  } catch (error) {
-    console.error('解析表单数据失败:', error)
+    // 如果已经是对象，直接返回
+    if (typeof props.formData === 'object' && props.formData !== null) {
+      return props.formData
+    }
+    
+    // 如果是字符串，尝试解析JSON
+    if (typeof props.formData === 'string') {
+      // 先检查是否为空字符串或只包含空格
+      const trimmedData = props.formData.trim()
+      if (!trimmedData) return null
+      
+      // 检查是否为有效的JSON格式
+      if (!trimmedData.startsWith('{') && !trimmedData.startsWith('[')) {
+        console.warn('表单数据不是有效的JSON格式:', trimmedData)
+        return { rawData: trimmedData }
+      }
+      
+      return JSON.parse(trimmedData)
+    }
+    
     return null
+  } catch (error) {
+    console.error('解析表单数据失败:', error, '原始数据:', props.formData)
+    ElMessage.error('表单数据格式错误，无法解析')
+    return { error: '数据解析失败', rawData: props.formData }
   }
 })
 
@@ -123,7 +142,14 @@ const dataKeys = computed(() => {
 
 // 格式化JSON用于显示
 const formattedJson = computed(() => {
-  return parsedFormData.value ? JSON.stringify(parsedFormData.value, null, 2) : ''
+  if (!parsedFormData.value) return ''
+  
+  try {
+    return JSON.stringify(parsedFormData.value, null, 2)
+  } catch (error) {
+    console.error('格式化JSON失败:', error)
+    return String(parsedFormData.value)
+  }
 })
 
 // 格式化数据用于表格显示

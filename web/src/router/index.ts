@@ -182,6 +182,12 @@ const defaultRoutes: RouteRecordRaw[] = [
         name: 'ticket-app',
         meta: { title: '工单创建' },
         component: () => import('@/views/tickets/ticketApp/index.vue')
+      },
+      {
+        path: 'tickets',
+        name: 'ticket-tickets',
+        meta: { title: '工单列表' },
+        component: () => import('@/views/tickets/tickets/index.vue')
       }
     ]
   },
