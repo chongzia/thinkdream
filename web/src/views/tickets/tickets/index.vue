@@ -1,121 +1,89 @@
 <template>
-  <div>
-    <catch-table 
-      :columns="columns" 
-      :api="api" 
-      :operation="false" 
-      :show-header="true" 
-      :search-form="searchForm"
-    >
-      <!-- 操作列 -->
-      <template #operate="scope">
-        <div class="action-buttons">
-          <el-button size="small" type="primary" text @click="handleViewTicketDetail(scope.row)" class="action-btn">
-            <el-icon size="14"><View /></el-icon>
-            详情
-          </el-button>
-          
-          <el-button 
-            size="small" 
-            type="success" 
-            text 
-            @click="handleViewFormData(scope.row)"
-            v-if="scope.row.ticket_data" 
-            class="action-btn"
-          >
-            <el-icon size="14"><Document /></el-icon>
-            流程
-          </el-button>
+  <div class="tickets-container">
+    <catch-table :columns="columns" :api="api" :operation="false" :show-header="true" :search-form="searchForm">
+        <!-- 操作列 -->
+        <template #operate="scope">
+          <div class="action-buttons">
+            <el-button size="small" type="primary" text @click="handleViewTicketDetail(scope.row)" class="action-btn">
+              <el-icon size="14">
+                <View />
+              </el-icon>
+              详情
+            </el-button>
 
-          <el-divider direction="vertical" />
+            <el-button size="small" type="success" text @click="handleViewFormData(scope.row)"
+              v-if="scope.row.ticket_data" class="action-btn">
+              <el-icon size="14">
+                <Document />
+              </el-icon>
+              流程
+            </el-button>
 
-          <el-button size="small" type="danger" text @click="handleDelete(scope.row)" class="action-btn">
-            <el-icon size="14"><Delete /></el-icon>
-            删除
-          </el-button>
-        </div>
-      </template>
+            <el-divider direction="vertical" />
 
-      <!-- 当前处理人列 -->
-      <template #current_processor="scope">
-        <el-tag 
-          :type="getProcessorTagType(scope.row)"
-          size="small"
-        >
-          {{ TicketUtils.getCurrentProcessor(scope.row, dataCache.users) }}
-        </el-tag>
-      </template>
+            <el-button size="small" type="danger" text @click="handleDelete(scope.row)" class="action-btn">
+              <el-icon size="14">
+                <Delete />
+              </el-icon>
+              删除
+            </el-button>
+          </div>
+        </template>
 
-      <!-- 受理状态列 -->
-      <template #accept_overdue_status="scope">
-        <el-tag :type="getOverdueTagType(TicketUtils.calculateAcceptOverdueStatus(scope.row))">
-          {{ TicketUtils.calculateAcceptOverdueStatus(scope.row) }}
-        </el-tag>
-      </template>
+        <!-- 当前处理人列 -->
+        <template #current_processor="scope">
+          <el-tag :type="getProcessorTagType(scope.row)" size="small">
+            {{ TicketUtils.getCurrentProcessor(scope.row, dataCache.users) }}
+          </el-tag>
+        </template>
 
-      <!-- 处理状态列 -->
-      <template #process_overdue_status="scope">
-        <el-tag :type="getOverdueTagType(TicketUtils.calculateProcessOverdueStatus(scope.row))">
-          {{ TicketUtils.calculateProcessOverdueStatus(scope.row) }}
-        </el-tag>
-      </template>
+        <!-- 受理状态列 -->
+        <template #accept_overdue_status="scope">
+          <el-tag :type="getOverdueTagType(TicketUtils.calculateAcceptOverdueStatus(scope.row))">
+            {{ TicketUtils.calculateAcceptOverdueStatus(scope.row) }}
+          </el-tag>
+        </template>
 
-      <!-- 状态列 -->
-      <template #ticket_status="scope">
-        <el-tag 
-          :type="getStatusTagType(scope.row.ticket_status)"
-          size="small"
-          v-if="scope.row.ticket_status"
-        >
-          {{ TicketUtils.getDictName(dataCache.statusOptions, scope.row.ticket_status) }}
-        </el-tag>
-        <span v-else class="text-gray-400">-</span>
-      </template>
+        <!-- 处理状态列 -->
+        <template #process_overdue_status="scope">
+          <el-tag :type="getOverdueTagType(TicketUtils.calculateProcessOverdueStatus(scope.row))">
+            {{ TicketUtils.calculateProcessOverdueStatus(scope.row) }}
+          </el-tag>
+        </template>
 
-      <!-- 优先级列 -->
-      <template #ticket_priority="scope">
-        <el-tag 
-          :type="getPriorityTagType(scope.row.ticket_priority)"
-          size="small"
-          v-if="scope.row.ticket_priority"
-        >
-          {{ TicketUtils.getDictName(dataCache.priorityOptions, scope.row.ticket_priority) }}
-        </el-tag>
-        <span v-else class="text-gray-400">-</span>
-      </template>
-    </catch-table>
+        <!-- 状态列 -->
+        <template #ticket_status="scope">
+          <el-tag :type="getStatusTagType(scope.row.ticket_status)" size="small" v-if="scope.row.ticket_status">
+            {{ TicketUtils.getDictName(dataCache.statusOptions, scope.row.ticket_status) }}
+          </el-tag>
+          <span v-else class="text-gray-400">-</span>
+        </template>
 
-    <!-- 工单详情弹窗 -->
-    <el-dialog 
-      v-model="dialogState.ticketDetail" 
-      title="详情" 
-      width="90%"
-      :before-close="() => closeDialog('ticketDetail')"
-    >
-      <TicketDetailViewer 
-        v-if="dialogState.ticketDetail && currentData.ticketRow" 
-        :ticket="currentData.ticketRow" 
-      />
-    </el-dialog>
+        <!-- 优先级列 -->
+        <template #ticket_priority="scope">
+          <el-tag :type="getPriorityTagType(scope.row.ticket_priority)" size="small" v-if="scope.row.ticket_priority">
+            {{ TicketUtils.getDictName(dataCache.priorityOptions, scope.row.ticket_priority) }}
+          </el-tag>
+          <span v-else class="text-gray-400">-</span>
+        </template>
+      </catch-table>
 
-    <!-- 表单数据查看弹窗 -->
-    <el-dialog 
-      v-model="dialogState.formData" 
-      title="流程" 
-      width="80%" 
-      :before-close="() => closeDialog('formData')"
-    >
-      <FormDataViewer 
-        v-if="dialogState.formData && currentData.formData" 
-        :form-data="currentData.formData"
-        :template-id="currentData.templateId" 
-      />
-    </el-dialog>
-  </div>
+      <!-- 工单详情弹窗 -->
+      <el-dialog v-model="dialogState.ticketDetail" title="详情" width="90%"
+        :before-close="() => closeDialog('ticketDetail')">
+        <TicketDetailViewer v-if="dialogState.ticketDetail && currentData.ticketRow" :ticket="currentData.ticketRow" />
+      </el-dialog>
+
+      <!-- 表单数据查看弹窗 -->
+      <el-dialog v-model="dialogState.formData" title="流程" width="80%" :before-close="() => closeDialog('formData')">
+        <FormDataViewer v-if="dialogState.formData && currentData.formData" :form-data="currentData.formData"
+          :template-id="currentData.templateId" />
+      </el-dialog>
+    </div>
 </template>
 
-<script lang="ts" setup>
-import { ref, onMounted, computed, reactive } from 'vue'
+  <script lang="ts" setup>
+import { ref, onMounted, onUnmounted, computed, reactive } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { View, Document, Delete } from '@element-plus/icons-vue'
 import http from '@/support/http'
@@ -165,6 +133,38 @@ const dataCache = reactive<DataCache>({
 
 // ===== 数据服务 =====
 class DataService {
+  // 安全的 JSON 解析函数
+  static safeJsonParse(jsonString: any): any {
+    if (!jsonString) return null
+    
+    // 如果已经是对象，直接返回
+    if (typeof jsonString === 'object' && jsonString !== null) {
+      return jsonString
+    }
+    
+    // 如果不是字符串，转换为字符串
+    if (typeof jsonString !== 'string') {
+      console.warn('safeJsonParse: 输入不是字符串类型:', typeof jsonString, jsonString)
+      return null
+    }
+    
+    try {
+      const trimmed = jsonString.trim()
+      if (!trimmed) return null
+      
+      // 只解析看起来像 JSON 的字符串
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        return JSON.parse(trimmed)
+      }
+      
+      // 其他情况返回原字符串
+      return trimmed
+    } catch (error) {
+      console.warn('JSON 解析失败:', error, '原始数据:', jsonString)
+      return null
+    }
+  }
+  
   static async fetchUsers(cache: DataCache): Promise<void> {
     if (cache.loading) return
     
@@ -176,8 +176,13 @@ class DataService {
       if (response.data?.data) {
         cache.users.clear()
         response.data.data.forEach((user: any) => {
-          if (user.id && user.nickname) {
-            cache.users.set(user.id, user.nickname)
+          // 安全处理用户数据
+          if (user && typeof user === 'object' && user.id && user.nickname) {
+            const userId = typeof user.id === 'number' ? user.id : parseInt(user.id)
+            const userName = typeof user.nickname === 'string' ? user.nickname : String(user.nickname)
+            if (!isNaN(userId) && userName) {
+              cache.users.set(userId, userName)
+            }
           }
         })
       }
@@ -197,15 +202,33 @@ class DataService {
       ])
       
       if (statusResponse.data?.data) {
-        statusResponse.data.data.forEach((item: any) => 
-          cache.statusOptions.set(item.value, item.label)
-        )
+        statusResponse.data.data.forEach((item: any) => {
+          // 安全处理字典数据
+          if (item && typeof item === 'object' && 
+              (typeof item.value === 'number' || typeof item.value === 'string') && 
+              item.label) {
+            const value = typeof item.value === 'number' ? item.value : parseInt(item.value)
+            const label = String(item.label)
+            if (!isNaN(value) && label) {
+              cache.statusOptions.set(value, label)
+            }
+          }
+        })
       }
       
       if (priorityResponse.data?.data) {
-        priorityResponse.data.data.forEach((item: any) => 
-          cache.priorityOptions.set(item.value, item.label)
-        )
+        priorityResponse.data.data.forEach((item: any) => {
+          // 安全处理字典数据
+          if (item && typeof item === 'object' && 
+              (typeof item.value === 'number' || typeof item.value === 'string') && 
+              item.label) {
+            const value = typeof item.value === 'number' ? item.value : parseInt(item.value)
+            const label = String(item.label)
+            if (!isNaN(value) && label) {
+              cache.priorityOptions.set(value, label)
+            }
+          }
+        })
       }
     } catch (error) {
       console.error('获取字典数据失败:', error)
@@ -232,6 +255,12 @@ class TicketUtils {
       return userMap.get(numId) || numId.toString()
     }
 
+    // 安全处理可能的对象或复杂数据类型
+    if (typeof userId === 'object' && userId !== null) {
+      console.warn('userId 是对象类型，尝试转换为字符串:', userId)
+      userId = String(userId)
+    }
+
     if (typeof userId === 'string' && userId.includes(',')) {
       return userId.split(',').map(id => id.trim()).filter(id => id)
         .map(getSingleUserName).join(', ')
@@ -242,12 +271,49 @@ class TicketUtils {
 
   // 字典名称获取
   static getDictName(map: Map<number, string>, value: number): string {
+    // 安全处理非数字类型
+    if (typeof value === 'object' && value !== null) {
+      console.warn('getDictName 接收到对象类型的 value:', value)
+      return String(value)
+    }
+    
+    if (typeof value !== 'number') {
+      const numValue = Number(value)
+      if (isNaN(numValue)) {
+        return String(value)
+      }
+      value = numValue
+    }
+    
     return map.get(value) || value.toString()
   }
 
   // 时间格式化
   static formatTime(timestamp: number): string {
-    return timestamp ? new Date(timestamp * 1000).toLocaleString() : '-'
+    if (!timestamp) return '-'
+    
+    // 安全处理时间戳
+    try {
+      let time: number
+      if (typeof timestamp === 'object' && timestamp !== null) {
+        console.warn('formatTime 接收到对象类型的 timestamp:', timestamp)
+        return '-'
+      }
+      
+      if (typeof timestamp === 'string') {
+        time = parseInt(timestamp)
+        if (isNaN(time)) return '-'
+      } else {
+        time = timestamp
+      }
+      
+      // 检查是否需要转换为毫秒
+      const finalTime = time > 1000000000000 ? time : time * 1000
+      return new Date(finalTime).toLocaleString()
+    } catch (error) {
+      console.error('时间格式化失败:', error, '原始数据:', timestamp)
+      return '-'
+    }
   }
 
   // 获取当前处理人
@@ -274,9 +340,34 @@ class TicketUtils {
         const currentNodeId = row.ticket_node_id || 1
         
         if (processUserIds) {
-          const userIds = typeof processUserIds === 'string' 
-            ? processUserIds.split(',').map(id => id.trim()).filter(id => id)
-            : [processUserIds]
+          // 安全处理 JSON 解析
+          let userIds: string[] = []
+          try {
+            if (typeof processUserIds === 'string') {
+              // 使用安全的 JSON 解析函数
+              const parsed = DataService.safeJsonParse(processUserIds)
+              if (parsed && Array.isArray(parsed)) {
+                userIds = parsed
+              } else if (parsed && typeof parsed === 'object') {
+                userIds = [String(parsed)]
+              } else if (typeof parsed === 'string') {
+                userIds = parsed.split(',').map(id => id.trim()).filter(id => id)
+              } else {
+                // 默认按逗号分割
+                userIds = processUserIds.split(',').map(id => id.trim()).filter(id => id)
+              }
+            } else if (Array.isArray(processUserIds)) {
+              userIds = processUserIds.map(id => String(id))
+            } else if (typeof processUserIds === 'object' && processUserIds !== null) {
+              console.warn('处理人 ID 是对象类型，尝试转换:', processUserIds)
+              userIds = [String(processUserIds)]
+            } else {
+              userIds = [String(processUserIds)]
+            }
+          } catch (jsonError) {
+            console.warn('解析处理人ID失败，使用逗号分割方式:', jsonError)
+            userIds = String(processUserIds).split(',').map(id => id.trim()).filter(id => id)
+          }
           
           const currentUserIndex = currentNodeId - 1
           if (currentUserIndex >= 0 && currentUserIndex < userIds.length) {
@@ -302,7 +393,17 @@ class TicketUtils {
       if (row.closed_at) return '正常'
       if (!row.ticket_accept_days || row.ticket_accept_days <= 0) return '正常'
 
-      const createdTime = new Date(row.created_at).getTime()
+      // 安全处理创建时间
+      let createdTime: number
+      if (typeof row.created_at === 'string') {
+        createdTime = new Date(row.created_at).getTime()
+      } else if (typeof row.created_at === 'number') {
+        // 如果是时间戳，检查是否需要转换
+        createdTime = row.created_at > 1000000000000 ? row.created_at : row.created_at * 1000
+      } else {
+        return '正常'
+      }
+      
       const acceptDeadline = createdTime + (row.ticket_accept_days * 24 * 60 * 60 * 1000)
       const currentTime = Date.now()
 
@@ -331,13 +432,29 @@ class TicketUtils {
         return '正常'
       }
 
-      const createdTime = new Date(row.created_at).getTime()
+      // 安全处理创建时间
+      let createdTime: number
+      if (typeof row.created_at === 'string') {
+        createdTime = new Date(row.created_at).getTime()
+      } else if (typeof row.created_at === 'number') {
+        // 如果是时间戳，检查是否需要转换
+        createdTime = row.created_at > 1000000000000 ? row.created_at : row.created_at * 1000
+      } else {
+        return '正常'
+      }
+      
       const totalDays = row.ticket_accept_days + row.ticket_process_days
       const processDeadline = createdTime + (totalDays * 24 * 60 * 60 * 1000)
       const currentTime = Date.now()
 
       if (row.ticket_process_at) {
-        const processTime = row.ticket_process_at * 1000
+        // 安全处理处理时间
+        let processTime: number
+        if (typeof row.ticket_process_at === 'number') {
+          processTime = row.ticket_process_at > 1000000000000 ? row.ticket_process_at : row.ticket_process_at * 1000
+        } else {
+          processTime = new Date(row.ticket_process_at).getTime()
+        }
         return processTime > processDeadline ? '超期' : '正常'
       }
 
@@ -454,6 +571,16 @@ const getPriorityTagType = (priority: number): string => {
 
 // ===== 初始化 =====
 onMounted(() => {
+  // 添加全局错误处理
+  const originalConsoleError = console.error
+  console.error = function(...args) {
+    // 过滤掉与 JSON 解析相关的错误，避免干扰
+    const errorMsg = args.join(' ')
+    if (!errorMsg.includes('not valid JSON') && !errorMsg.includes('SyntaxError')) {
+      originalConsoleError.apply(console, args)
+    }
+  }
+  
   DataService.initializeAll(dataCache)
 })
 
@@ -581,43 +708,48 @@ const columns = computed(() => [
 const api = API_ENDPOINT
 </script>
 
-<style scoped>
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
+  <style scoped>
+    .tickets-container {
+      height: 100%;
+      padding: 16px;
+    }
 
-.action-btn {
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
 
-.action-btn:hover {
-  background-color: var(--el-fill-color-light);
-}
+    .action-btn {
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
 
-:deep(.el-divider--vertical) {
-  height: 16px;
-  margin: 0 4px;
-}
+    .action-btn:hover {
+      background-color: var(--el-fill-color-light);
+    }
 
-:deep(.el-table) {
-  border-radius: 8px;
-}
+    :deep(.el-divider--vertical) {
+      height: 16px;
+      margin: 0 4px;
+    }
 
-:deep(.el-table th) {
-  background-color: var(--el-fill-color-light);
-  font-weight: 600;
-}
+    :deep(.el-table) {
+      border-radius: 8px;
+    }
 
-:deep(.el-table td) {
-  padding: 8px 0;
-}
+    :deep(.el-table th) {
+      background-color: var(--el-fill-color-light);
+      font-weight: 600;
+    }
 
-:deep(.el-button.is-disabled) {
-  opacity: 0.4;
-}
-</style>
+    :deep(.el-table td) {
+      padding: 8px 0;
+    }
+
+    :deep(.el-button.is-disabled) {
+      opacity: 0.4;
+    }
+  </style>

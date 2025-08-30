@@ -213,7 +213,7 @@ export function unique(arr: Array<any>) {
  * @returns
  */
 export function isProd() {
-  return (env('PROD', false) === true || env('PRODUCTION', false) === true) && env('MODE', false) === 'production'
+  return import.meta.env?.PROD === true
 }
 
 // 获取文件 ext
