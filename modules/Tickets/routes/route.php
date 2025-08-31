@@ -9,6 +9,12 @@ Route::prefix('tickets')->group(function(){
     
 	Route::adminResource('tickets', TicketsController::class);
 	
+	// 工单回复相关路由
+	Route::get('tickets/{id}/replies', [TicketsController::class, 'getReplies'])
+		->name('tickets.replies.index');
+	Route::post('tickets/{id}/replies', [TicketsController::class, 'addReply'])
+		->name('tickets.replies.store');
+	
 	// 模板表单配置专用路由（使用更具体的路径避免冲突）
 	Route::put('ticket/templates/{id}/form-config', [TicketTemplatesController::class, 'saveForm'])
 		->name('ticket.template.form.save');

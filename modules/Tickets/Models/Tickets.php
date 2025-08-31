@@ -11,7 +11,8 @@ use Catch\Traits\DB\Trans;
 use Catch\Traits\DB\WithAttributes;
 use Modules\Permissions\Models\Traits\DataRange;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use IlluminateDatabaseEloquentRelations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -145,6 +146,16 @@ class Tickets extends Model
     public function ticketTemplates(): HasOne
     {
         return $this->hasOne(related: TicketTemplates::class, foreignKey: 'id', localKey: 'ticket_template');
+    }
+
+    /**
+     * 关联到工单回复
+     * @return HasMany
+     */
+    public function replies(): HasMany
+    {
+        return $this->hasMany(TicketReplies::class, 'ticket_id', 'id')
+                   ->orderBy('created_at', 'asc');
     }
 
 

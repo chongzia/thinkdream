@@ -1,93 +1,98 @@
 <template>
-  <div class="ticket-detail-viewer">
+  <div class="ticket-detail-container">
     <el-row :gutter="20">
-      <!-- 左侧：基本信息 -->
-      <el-col :span="12">
+      <!-- 左侧：工单基本信息和模板信息 -->
+      <el-col :xs="24" :sm="24" :md="14" :lg="14">
+        <!-- 工单基本信息 -->
         <el-card class="detail-card">
           <template #header>
             <div class="card-header">
               <span>工单基本信息</span>
-              <el-tag :type="getStatusTagType(ticket.ticket_status)">
-                {{ getStatusName(ticket.ticket_status) }}
+              <el-tag :type="getStatusTagType(ticketDetail.ticket_status)">
+                {{ getStatusName(ticketDetail.ticket_status) }}
               </el-tag>
             </div>
           </template>
           
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="工单编号">
-              <el-tag type="info">{{ ticket.ticket_no }}</el-tag>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="工单编号" :span="2">
+              <el-tag type="info">{{ ticketDetail.ticket_no }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="工单标题">
-              <strong>{{ ticket.ticket_name }}</strong>
+            <el-descriptions-item label="工单标题" :span="2">
+              <strong>{{ ticketDetail.ticket_name }}</strong>
             </el-descriptions-item>
             <el-descriptions-item label="工单状态">
-              <el-tag :type="getStatusTagType(ticket.ticket_status)">
-                {{ getStatusName(ticket.ticket_status) }}
+              <el-tag :type="getStatusTagType(ticketDetail.ticket_status)">
+                {{ getStatusName(ticketDetail.ticket_status) }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="优先级">
-              <el-tag :type="getPriorityTagType(ticket.ticket_priority)">
-                {{ getPriorityName(ticket.ticket_priority) }}
+              <el-tag :type="getPriorityTagType(ticketDetail.ticket_priority)">
+                {{ getPriorityName(ticketDetail.ticket_priority) }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="关联模板">
-              <div v-if="ticket.ticket_template">
-                <el-button 
-                  type="primary" 
-                  size="small" 
-                  @click="viewTemplate"
-                  :loading="templateLoading"
-                >
-                  <el-icon><Document /></el-icon>
-                  查看模板 (ID: {{ ticket.ticket_template }})
-                </el-button>
-              </div>
-              <span v-else>无关联模板</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="受理人">
-              <div v-if="ticket.ticket_node_accept">
+            <el-descriptions-item label="发起人" :span="1">
+              <div v-if="ticketDetail.ticket_promoter">
                 <el-avatar :size="24" class="mr-2">
-                  {{ getUserName(ticket.ticket_node_accept).charAt(0) }}
+                  {{ getPromoterName(ticketDetail.ticket_promoter).charAt(0) }}
                 </el-avatar>
-                {{ getUserName(ticket.ticket_node_accept) }}
+                {{ getPromoterName(ticketDetail.ticket_promoter) }}
+              </div>
+              <span v-else>未知用户</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="受理人" :span="1">
+              <div v-if="ticketDetail.ticket_node_accept">
+                <el-avatar :size="24" class="mr-2">
+                  {{ getAcceptorName(ticketDetail.ticket_node_accept).charAt(0) }}
+                </el-avatar>
+                {{ getAcceptorName(ticketDetail.ticket_node_accept) }}
               </div>
               <span v-else>未指定</span>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
 
-        <!-- 时间信息 -->
-        <el-card class="detail-card mt-4">
+        <!-- 工单模板信息 -->
+        <el-card class="detail-card mt-4" v-if="templateInfo">
           <template #header>
             <div class="card-header">
-              <span>时间记录</span>
+              <span>模板信息</span>
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="showTemplateDetail = true"
+              >
+                <el-icon><Document /></el-icon>
+                查看完整模板
+              </el-button>
             </div>
           </template>
           
-          <el-timeline>
-            <el-timeline-item timestamp="创建时间" :hollow="false">
-              <el-tag size="small">{{ formatDateTime(ticket.created_at) }}</el-tag>
-            </el-timeline-item>
-            <el-timeline-item timestamp="最后更新" :hollow="false" v-if="ticket.updated_at">
-              <el-tag type="warning" size="small">{{ formatDateTime(ticket.updated_at) }}</el-tag>
-            </el-timeline-item>
-            <el-timeline-item timestamp="关闭时间" :hollow="false" v-if="ticket.closed_at">
-              <el-tag type="success" size="small">{{ formatDateTime(ticket.closed_at) }}</el-tag>
-            </el-timeline-item>
-          </el-timeline>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="模板名称" :span="2">
+              <strong>{{ templateInfo.ticket_name }}</strong>
+            </el-descriptions-item>
+            <el-descriptions-item label="模板描述" :span="2" v-if="templateInfo.ticket_description">
+              {{ templateInfo.ticket_description }}
+            </el-descriptions-item>
+            <el-descriptions-item label="受理天数">
+              {{ templateInfo.ticket_accept_days }} 天
+            </el-descriptions-item>
+            <el-descriptions-item label="处理天数">
+              {{ templateInfo.ticket_process_days }} 天
+            </el-descriptions-item>
+          </el-descriptions>
         </el-card>
-      </el-col>
-
-      <!-- 右侧：表单数据详情 -->
-      <el-col :span="12">
-        <el-card class="detail-card">
+        <!-- 用户提交的表单数据 -->
+        <el-card class="detail-card mt-4">
           <template #header>
             <div class="card-header">
-              <span>表单数据详情</span>
+              <span>用户提交内容</span>
               <el-button 
+                v-if="parsedFormData"
+                type="primary" 
                 size="small" 
-                @click="viewFormData"
-                v-if="ticket.ticket_data"
+                @click="showFormDataDetail = true"
               >
                 <el-icon><View /></el-icon>
                 详细查看
@@ -95,63 +100,75 @@
             </div>
           </template>
           
-          <div v-if="parsedFormData" class="form-data-preview">
+          <div v-if="parsedFormData && Object.keys(parsedFormData).length > 0" class="form-data-preview">
             <div 
               v-for="(value, key) in parsedFormData" 
               :key="key"
               class="data-item"
             >
-              <div class="data-label">{{ getFieldLabel(key) }}:</div>
+              <div class="data-label">{{ getFieldLabel(String(key)) }}:</div>
               <div class="data-value">
-                <el-tag 
-                  v-if="Array.isArray(value)"
-                  v-for="(item, index) in value.slice(0, 3)" 
-                  :key="index"
-                  size="small"
-                  class="mr-1"
-                >
-                  {{ item }}
-                </el-tag>
-                <span v-if="Array.isArray(value) && value.length > 3" class="more-text">
-                  ... 等{{ value.length }}项
-                </span>
-                <span v-else-if="!Array.isArray(value)">
+                <template v-if="Array.isArray(value)">
+                  <el-tag 
+                    v-for="(item, index) in value.slice(0, 3)" 
+                    :key="index"
+                    size="small"
+                    class="mr-1"
+                  >
+                    {{ item }}
+                  </el-tag>
+                  <span v-if="value.length > 3" class="more-text">
+                    ... 等{{ value.length }}项
+                  </span>
+                </template>
+                <template v-else>
                   {{ formatValue(value) }}
-                </span>
+                </template>
               </div>
             </div>
           </div>
           
-          <el-empty v-else description="暂无表单数据" />
+          <el-empty v-else description="暂无提交数据" />
         </el-card>
+      </el-col>
 
-        <!-- 操作历史记录（模拟） -->
-        <el-card class="detail-card mt-4">
+      <!-- 右侧：时间记录和回复内容 -->
+      <el-col :xs="24" :sm="24" :md="10" :lg="10">
+        <!-- 时间记录 -->
+        <el-card class="detail-card">
           <template #header>
             <div class="card-header">
-              <span>操作记录</span>
+              <span>时间记录</span>
             </div>
           </template>
           
           <el-timeline>
             <el-timeline-item 
-              :timestamp="formatDateTime(ticket.created_at)"
+              :timestamp="formatDateTime(ticketDetail.created_at)"
               icon="Plus"
               type="primary"
             >
               工单已创建
             </el-timeline-item>
             <el-timeline-item 
-              v-if="ticket.ticket_node_accept"
-              :timestamp="formatDateTime(ticket.updated_at || ticket.created_at)"
+              v-if="ticketDetail.ticket_accept_at"
+              :timestamp="formatDateTime(ticketDetail.ticket_accept_at)"
               icon="User"
               type="success"
             >
-              已分配给 {{ getUserName(ticket.ticket_node_accept) }}
+              工单已受理
             </el-timeline-item>
             <el-timeline-item 
-              v-if="ticket.closed_at"
-              :timestamp="formatDateTime(ticket.closed_at)"
+              v-if="ticketDetail.ticket_process_at"
+              :timestamp="formatDateTime(ticketDetail.ticket_process_at)"
+              icon="Setting"
+              type="warning"
+            >
+              开始处理
+            </el-timeline-item>
+            <el-timeline-item 
+              v-if="ticketDetail.closed_at"
+              :timestamp="formatDateTime(ticketDetail.closed_at)"
               icon="Check"
               type="success"
             >
@@ -159,112 +176,206 @@
             </el-timeline-item>
           </el-timeline>
         </el-card>
+
+        <!-- 工单回复 -->
+        <TicketReplyList 
+          class="mt-4"
+          :ticket-id="ticketDetail.id" 
+          :replies="replies"
+          :loading="repliesLoading"
+          @refresh="loadReplies"
+        />
+
+        <!-- 回复表单 -->
+        <TicketReplyForm 
+          v-if="canReply"
+          class="mt-4"
+          :ticket-id="ticketDetail.id"
+          @reply-success="handleReplySuccess"
+        />
       </el-col>
     </el-row>
 
-    <!-- 模板查看弹窗 -->
+    <!-- 模板详情弹窗 -->
     <el-dialog
-      v-model="templateDialogVisible"
-      title="关联模板详情"
+      v-model="showTemplateDetail"
+      title="模板详情"
       width="80%"
-      :before-close="handleTemplateDialogClose"
+      :before-close="() => showTemplateDetail = false"
     >
-      <TicketTemplate 
-        v-if="templateDialogVisible && ticket.ticket_template"
-        mode="detail"
-        :template-id="ticket.ticket_template"
-        :show-actions="false"
+      <TicketTemplateViewer 
+        v-if="showTemplateDetail && templateInfo"
+        :template-data="templateInfo"
+        mode="readonly"
       />
     </el-dialog>
 
-    <!-- 表单数据查看弹窗 -->
+    <!-- 表单数据详情弹窗 -->
     <el-dialog
-      v-model="formDataDialogVisible"
-      title="表单数据详情"
+      v-model="showFormDataDetail"
+      title="用户提交内容详情"
       width="70%"
-      :before-close="handleFormDataDialogClose"
+      :before-close="() => showFormDataDetail = false"
     >
-      <FormDataViewer 
-        v-if="formDataDialogVisible && ticket.ticket_data"
-        :form-data="ticket.ticket_data"
-        :template-id="ticket.ticket_template"
+      <TicketFormDataViewer 
+        v-if="showFormDataDetail && parsedFormData"
+        :form-data="parsedFormData"
+        :template-fields="templateFields"
       />
     </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import { Document, View } from '@element-plus/icons-vue'
-import TicketTemplate from '@/components/ticket/TicketTemplate.vue'
-import FormDataViewer from './FormDataViewer.vue'
+import { ref, computed, onMounted, inject } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Document, View, Plus, User, Setting, Check } from '@element-plus/icons-vue'
+import TicketReplyList from './TicketReplyList.vue'
+import TicketReplyForm from './TicketReplyForm.vue'
+import TicketTemplateViewer from './TicketTemplateViewer.vue'
+import TicketFormDataViewer from './TicketFormDataViewer.vue'
+import http from '@/support/http'
 
 interface Props {
-  ticket: any
+  ticketId: number | string
 }
 
 const props = defineProps<Props>()
 
-const templateLoading = ref(false)
-const templateDialogVisible = ref(false)
-const formDataDialogVisible = ref(false)
+// 响应式数据
+const ticketDetail = ref<any>({})
+const templateInfo = ref<any>(null)
+const replies = ref<any[]>([])
+const loading = ref(false)
+const repliesLoading = ref(false)
+const showTemplateDetail = ref(false)
+const showFormDataDetail = ref(false)
 
-// 解析表单数据
+// 计算属性
 const parsedFormData = computed(() => {
-  if (!props.ticket.ticket_data) return null
+  if (!ticketDetail.value.ticket_data) return null
   
   try {
-    return typeof props.ticket.ticket_data === 'string' 
-      ? JSON.parse(props.ticket.ticket_data)
-      : props.ticket.ticket_data
+    return typeof ticketDetail.value.ticket_data === 'string' 
+      ? JSON.parse(ticketDetail.value.ticket_data)
+      : ticketDetail.value.ticket_data
   } catch (error) {
     console.error('解析表单数据失败:', error)
     return null
   }
 })
 
-// 获取状态名称（这里应该与父组件保持一致）
+const templateFields = computed(() => {
+  if (!templateInfo.value?.ticket_form) return []
+  
+  try {
+    const formConfig = typeof templateInfo.value.ticket_form === 'string'
+      ? JSON.parse(templateInfo.value.ticket_form)
+      : templateInfo.value.ticket_form
+    
+    return Array.isArray(formConfig) ? formConfig : []
+  } catch (error) {
+    console.error('解析模板字段失败:', error)
+    return []
+  }
+})
+
+const canReply = computed(() => {
+  // 只有状态为待处理、已受理、处理中的工单才能回复
+  return [1, 2, 4].includes(ticketDetail.value.ticket_status)
+})
+
+// 方法
+const loadTicketDetail = async () => {
+  loading.value = true
+  try {
+    const response = await http.get(`tickets/tickets/${props.ticketId}`)
+    ticketDetail.value = response.data
+    
+    // 如果有关联模板，加载模板信息
+    if (response.data.ticket_template) {
+      await loadTemplateInfo(response.data.ticket_template)
+    }
+  } catch (error) {
+    console.error('加载工单详情失败:', error)
+    ElMessage.error('加载工单详情失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadTemplateInfo = async (templateId: number) => {
+  try {
+    const response = await http.get(`tickets/ticket/templates/${templateId}`)
+    templateInfo.value = response.data
+  } catch (error) {
+    console.error('加载模板信息失败:', error)
+  }
+}
+
+const loadReplies = async () => {
+  repliesLoading.value = true
+  try {
+    const response = await http.get(`tickets/tickets/${props.ticketId}/replies`)
+    replies.value = response.data || []
+  } catch (error) {
+    console.error('加载回复失败:', error)
+    ElMessage.error('加载回复失败')
+  } finally {
+    repliesLoading.value = false
+  }
+}
+
+const handleReplySuccess = () => {
+  loadReplies()
+  ElMessage.success('回复成功')
+}
+
+// 辅助方法
 const getStatusName = (statusValue: number): string => {
   const statusMap: Record<number, string> = {
     1: '待处理',
-    2: '处理中',
-    3: '已完成',
-    4: '已关闭',
-    5: '已取消'
+    2: '已受理',
+    3: '已拒绝',
+    4: '处理中',
+    6: '已完成'
   }
   return statusMap[statusValue] || `状态${statusValue}`
 }
 
-// 获取优先级名称
+
 const getPriorityName = (priorityValue: number): string => {
   const priorityMap: Record<number, string> = {
     1: '低',
     2: '中',
     3: '高',
-    4: '紧急'
+    4: '特'
   }
   return priorityMap[priorityValue] || `优先级${priorityValue}`
 }
 
-// 获取用户名称
-const getUserName = (userId: number): string => {
-  // 这里应该从父组件或全局状态获取用户映射
+const getPromoterName = (userId: number): string => {
+  // TODO: 从用户状态或接口获取用户名称
   return `用户${userId}`
 }
 
-// 获取状态标签类型
+const getAcceptorName = (userId: number): string => {
+  // TODO: 从用户状态或接口获取用户名称
+  return `受理人${userId}`
+}
+
 const getStatusTagType = (statusValue: number): string => {
   const statusTagTypes: Record<number, string> = {
     1: 'warning',
-    2: 'primary',
-    3: 'success',
+    2: 'primary', 
+    3: 'danger',
     4: 'info',
-    5: 'danger'
+    6: 'success'
   }
   return statusTagTypes[statusValue] || 'info'
 }
 
-// 获取优先级标签类型
+
 const getPriorityTagType = (priorityValue: number): string => {
   const priorityTagTypes: Record<number, string> = {
     1: 'success',
@@ -275,8 +386,13 @@ const getPriorityTagType = (priorityValue: number): string => {
   return priorityTagTypes[priorityValue] || 'primary'
 }
 
-// 获取字段标签
+
 const getFieldLabel = (key: string): string => {
+  // 从模板字段中查找标签
+  const field = templateFields.value.find((f: any) => f.name === key)
+  if (field) return field.label || field.name
+  
+  // 默认标签映射
   const labelMap: Record<string, string> = {
     'name': '姓名',
     'phone': '电话',
@@ -292,7 +408,7 @@ const getFieldLabel = (key: string): string => {
   return labelMap[key] || key
 }
 
-// 格式化值
+
 const formatValue = (value: any): string => {
   if (value === null || value === undefined) return '-'
   if (typeof value === 'boolean') return value ? '是' : '否'
@@ -300,40 +416,28 @@ const formatValue = (value: any): string => {
   return String(value).length > 50 ? String(value).substring(0, 50) + '...' : String(value)
 }
 
-// 格式化日期时间
-const formatDateTime = (dateTime: string): string => {
-  if (!dateTime) return '-'
-  return new Date(dateTime).toLocaleString('zh-CN')
+const formatDateTime = (timestamp: number | string): string => {
+  if (!timestamp) return '-'
+  
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000)
+  return date.toLocaleString('zh-CN')
 }
 
-// 查看模板
-const viewTemplate = () => {
-  templateDialogVisible.value = true
-}
-
-// 查看表单数据
-const viewFormData = () => {
-  formDataDialogVisible.value = true
-}
-
-// 弹窗关闭处理
-const handleTemplateDialogClose = () => {
-  templateDialogVisible.value = false
-}
-
-const handleFormDataDialogClose = () => {
-  formDataDialogVisible.value = false
-}
+// 生命周期
+onMounted(() => {
+  loadTicketDetail()
+  loadReplies()
+})
 </script>
 
 <style scoped>
-.ticket-detail-viewer {
-  max-height: 80vh;
-  overflow-y: auto;
+.ticket-detail-container {
+  padding: 0;
 }
 
 .detail-card {
   height: fit-content;
+  margin-bottom: 0;
 }
 
 .card-header {
@@ -351,9 +455,10 @@ const handleFormDataDialogClose = () => {
 .data-item {
   display: flex;
   margin-bottom: 12px;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 12px;
+  border-radius: 6px;
   background-color: var(--el-fill-color-lighter);
+  border-left: 3px solid var(--el-color-primary);
 }
 
 .data-label {
@@ -378,5 +483,10 @@ const handleFormDataDialogClose = () => {
 .more-text {
   color: var(--el-text-color-placeholder);
   font-size: 12px;
+  font-style: italic;
+}
+
+.mt-4 {
+  margin-top: 1rem;
 }
 </style>
